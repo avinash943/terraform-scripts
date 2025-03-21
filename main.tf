@@ -52,8 +52,7 @@ resource "google_container_cluster" "aks_cluster" {
 
   network    = google_compute_network.vpc_network.name
   subnetwork = google_compute_subnetwork.subnet.name
-
-  enable_network_policy = true
+  
 }
 
 # 5. Persistent Disk Configuration
