@@ -18,9 +18,10 @@ resource "google_storage_bucket" "terraform-afrozbucket" {
 
 # 3. VM Instance Configuration
 resource "google_compute_instance" "vm_instance" {
-  name         = "my-vm-instance"
-  machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  count        = var.instance_count  # Use instance_count variable to create multiple instances
+  name         = "${var.instance_name}-${count.index + 1}"  # Append instance number to name
+  machine_type = var.instance_machine_type  # Use instance_machine_type variable
+  zone         = var.zone  # Use zone variable
   
   # Boot disk configuration for the VM
   boot_disk {
@@ -51,7 +52,7 @@ resource "google_container_cluster" "aks_cluster" {
   initial_node_count = 1
   
   node_config {
-    machine_type = "e2-medium"
+    machine_type = var.instance_machine_type  # Use instance_machine_type variable
     
     # Ensuring each GKE node has a 30 GB disk
     disk_size_gb = 30
