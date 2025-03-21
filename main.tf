@@ -11,18 +11,22 @@ resource "google_compute_subnetwork" "subnet" {
   ip_cidr_range = "10.0.0.0/24"
 }
 
- resource "google_storage_bucket" "terraform-afrozbucket" {
+resource "google_storage_bucket" "terraform-afrozbucket" {
   name          = "terraform-afrozbucket"
   location      = "US"
 }
+
 # 3. VM Instance Configuration
 resource "google_compute_instance" "vm_instance" {
   name         = "my-vm-instance"
   machine_type = "e2-medium"
   zone         = "us-central1-a"
+  
+  # Boot disk configuration for the VM
   boot_disk {
     initialize_params {
       image = "debian-11"
+      size  = 10 # 10 GB boot disk size
     }
   }
 
@@ -39,23 +43,28 @@ resource "google_compute_instance" "vm_instance" {
     echo "Hello, World!" > /var/www/html/index.html
     EOT
 }
+
 # 4. Google Kubernetes Engine (GKE) Cluster Configuration
 resource "google_container_cluster" "aks_cluster" {
   name     = "my-aks-cluster"
 
   initial_node_count = 1
+  
   node_config {
     machine_type = "e2-medium"
+    
+    # Ensuring each GKE node has a 30 GB disk
+    disk_size_gb = 30
+    disk_type    = "pd-standard"  # Use standard persistent disk
   }
 
   network    = google_compute_network.vpc_network.name
   subnetwork = google_compute_subnetwork.subnet.name
-
 }
 
-# 5. Persistent Disk Configuration
+# 5. Persistent Disk Configuration (10 GB)
 resource "google_compute_disk" "disk" {
   name  = "my-disk"
-  size  = 10  # Size in GB
+  size  = 10  # Size in GB (for additional storage disk)
   type  = "pd-standard"  # Standard persistent disk
 }
