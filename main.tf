@@ -23,7 +23,7 @@ resource "google_compute_instance" "vm_instance" {
   zone         = "us-central1-a"
   boot_disk {
     initialize_params {
-      image = "debian-10-buster-v20210129"
+      image = "debian-11-buster-v20210129"
     }
   }
 
@@ -52,7 +52,7 @@ resource "google_container_cluster" "aks_cluster" {
 
   network    = google_compute_network.vpc_network.name
   subnetwork = google_compute_subnetwork.subnet.name
-  
+
 }
 
 # 5. Persistent Disk Configuration
