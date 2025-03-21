@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json')  // Jenkins secret ID for the GCP service account key
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')  // Jenkins secret ID for the GCP service account key
     }
 
     stages {
