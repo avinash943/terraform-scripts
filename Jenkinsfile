@@ -26,7 +26,7 @@ pipeline {
             steps {
                 script {
                     // Generate the execution plan
-                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform plan'
                 }
             }
         }
@@ -35,20 +35,10 @@ pipeline {
             steps {
                 script {
                     // Apply the Terraform plan
-                    sh 'terraform apply -auto-approve tfplan'
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
-
-        stage('Clean Up') {
-            steps {
-                script {
-                    // Clean up the plan file after deployment
-                    sh 'rm -f tfplan'
-                }
-            }
-        }
-    }
 
     post {
         always {
