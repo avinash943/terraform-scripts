@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')  // Jenkins secret ID for the GCP service account key
+        // Optionally, you can define other environment variables here
     }
 
     stages {
@@ -16,8 +16,10 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 script {
-                    // Initialize the Terraform working directory
-                    sh 'terraform init'
+                    withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        // Initialize the Terraform working directory
+                        sh 'terraform init'
+                    }
                 }
             }
         }
@@ -25,8 +27,10 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 script {
-                    // Generate the execution plan
-                    sh 'terraform plan'
+                    withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        // Generate the execution plan
+                        sh 'terraform plan'
+                    }
                 }
             }
         }
@@ -34,8 +38,10 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 script {
-                    // Apply the Terraform plan
-                    sh 'terraform apply -auto-approve'
+                    withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        // Apply the Terraform plan
+                        sh 'terraform apply -auto-approve'
+                    }
                 }
             }
         }
