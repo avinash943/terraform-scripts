@@ -1,7 +1,8 @@
+
 # 1. VPC Configuration
 resource "google_compute_network" "vpc_network" {
   name                    = "vpc-network"
-  auto_create_subnetworks = false
+  auto_create_subnetworks  = false  # Disable auto-creation of subnets
 }
 
 # 2. Subnet Configuration
@@ -9,20 +10,21 @@ resource "google_compute_subnetwork" "subnet" {
   name          = "subnet-1"
   network       = google_compute_network.vpc_network.name
   ip_cidr_range = "10.0.0.0/24"
-  zone = var.zone
+  region        = "us-central1"
 }
 
+# 3. Google Cloud Storage Bucket
 resource "google_storage_bucket" "terraform-afrozbucket" {
-  name          = "terraform-afrozbucket"
-  location      = "US"
+  name     = "terraform-afrozbucket"
+  location = "US"
 }
 
-# 3. VM Instance Configuration
+# 4. VM Instance Configuration
 resource "google_compute_instance" "vm_instance" {
-  count        = var.instance_count  # Use instance_count variable to create multiple instances
-  name         = "${var.instance_name}-${count.index + 1}"  # Append instance number to name
-  machine_type = var.instance_machine_type  # Use instance_machine_type variable
-  zone         = var.zone  # Use zone variable
+  count        = var.instance_count  # Creates multiple instances based on variable
+  name         = "${var.instance_name}-${count.index + 1}"  # Unique name per instance
+  machine_type = var.instance_machine_type  # Machine type from variable
+  zone         = var.zone  # Zone from variable
   
   # Boot disk configuration for the VM
   boot_disk {
@@ -33,40 +35,52 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   network_interface {
-    network = google_compute_network.vpc_network.name
+    network   = google_compute_network.vpc_network.name
     subnetwork = google_compute_subnetwork.subnet.name
     access_config {
-      # Allocate a public IP
+      # Allocate a public IP address
     }
   }
 
   metadata_startup_script = <<-EOT
     #!/bin/bash
     echo "Hello, World!" > /var/www/html/index.html
-    EOT
+  EOT
 }
 
-# 4. Google Kubernetes Engine (GKE) Cluster Configuration
+# 5. Google Kubernetes Engine (GKE) Cluster Configuration
 resource "google_container_cluster" "aks_cluster" {
-  name     = "my-aks-cluster"
+  name               = "my-aks-cluster"
+  location           = "us-central1"
 
-  initial_node_count = 1
-  
-  node_config {
-    machine_type = var.instance_machine_type  # Use instance_machine_type variable
-    
-    # Ensuring each GKE node has a 30 GB disk
-    disk_size_gb = 30
-    disk_type    = "pd-standard"  # Use standard persistent disk
-  }
+  # Cluster-wide configuration
+  enable_shielded_nodes = true
+  logging_service      = "logging.googleapis.com/kubernetes"
+  monitoring_service   = "monitoring.googleapis.com/kubernetes"
 
   network    = google_compute_network.vpc_network.name
   subnetwork = google_compute_subnetwork.subnet.name
-}
 
-# 5. Persistent Disk Configuration (10 GB)
-resource "google_compute_disk" "disk" {
-  name  = "my-disk"
-  size  = 10  # Size in GB (for additional storage disk)
-  type  = "pd-standard"  # Standard persistent disk
+  # Use node_pool to manage node configuration
+  node_pool {
+    name       = "default-pool"
+    node_count = 1  # Starting with 1 node for minimal setup
+
+    autoscaling {
+      min_node_count = 1
+      max_node_count = 2  # Allow auto-scaling between 1 and 3 nodes
+    }
+
+    node_config {
+      machine_type = var.instance_machine_type
+      disk_size_gb = 30  # Disk size for each node
+      disk_type    = "pd-standard"  # Standard persistent disk
+
+      # Additional configurations
+      preemptible = false  # Non-preemptible nodes
+      oauth_scopes = [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ]
+    }
+  }
 }
